@@ -1,27 +1,23 @@
-import { generateWithTokenUsage } from "polyfact";
+import * as readline from "node:readline/promises";
+import { stdin as input, stdout as output } from "node:process";
+import { Chat } from "polyfact";
 
-const chatHistory: string[] = [];
+const rl = readline.createInterface({ input, output });
 
-export async function sendMessage(userAnswer: string, chatHistory: string[]) {
-  const topic = "advanced physics";
+async function main () {
+    const topic = "advanced physics";
 
-  let prompt = "";
-  if (!chatHistory.length) {
-    prompt = `Ask a random ${topic} question.`;
-  } else {
-    prompt = `
-  Check if this answer answers that question correctly. Question: ${
-    chatHistory[chatHistory.length - 2]
-  }. Answer: ${chatHistory[chatHistory.length - 1]}.
-  If it did answer correctly, ask another question on ${topic}. If it did not answer corretly give the correct answer in a short paragraph; then ask another question about ${topic}.`;
-  }
+    const systemPrompt = `Ask a random ${topic} question. If the Human answers correctly, ask another question on ${topic}. If the Human answers incorrectly, give the correct answer in a short paragraph; then ask another question about ${topic}.`;
 
-  const { result, tokenUsage } = await generateWithTokenUsage(prompt);
-  chatHistory.push(userAnswer);
-  chatHistory.push(result);
-  return result;
+    const chat = new Chat({ systemPrompt });
+
+    console.log(await chat.sendMessage("start"));
+
+    while (true) {
+        const userInput = await rl.question("> ");
+
+        console.log(await chat.sendMessage(userInput));
+    }
 }
 
-export function getChatHistory() {
-  return chatHistory;
-}
+main();
